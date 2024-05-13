@@ -1,33 +1,30 @@
 import socket
 import threading
 
-clients = []
+clients = {}
 
 # Funzione per gestire i client
 def handle_client(client_socket, addr, name):
     print(f"[NUOVA CONNESSIONE] {name} connesso.")
-
+    
     while True:
         # Ricevi i dati dal client
-        try:
-            data = client_socket.recv(1024)
-            if data:
-                message = (name, data.decode())
-                print(message)
-                broadcast(message)
-            else:
-                client_socket.close()
-                clients.remove((client_socket, addr, name))
-                print(f"[DISCONNESSIONE] {name} disconnesso.")
-                break
-        except Exception as e:
+        data = client_socket.recv(1024)
+        if data:
+            message = (name, data.decode())
+            print(message)
+            broadcast(f"{message[0]}: {message[1]}")
+        else:
+            client_socket.close()
+            clients.pop(name)
+            print(f"[DISCONNESSIONE] {name} disconnesso.")
+            broadcast(f"{name} si é disconnesso")
             break
 
 # Funzione per inviare messaggi a tutti i client
 def broadcast(message):
-    for client in clients:
-        if client[2] != message[0]:
-            client[0].send(f"{message[0][1]} {message[1]}".encode())
+    for client in clients.values():
+        client.send(message.encode())
 
 def serverStart():
     # Configurazione del server
@@ -51,13 +48,18 @@ def serverStart():
                 client_thread = threading.Thread(target=handle_client, args=(client_socket, addr, name))
                 client_thread.start()
                 
-                clients.append((client_socket, client_thread, name))
+                broadcast(f"{name} si é unito alla chat room")
+                
+                if name in clients.keys():
+                    client_socket.send("Nome giá in uso".encode())
+                
+                clients[name] = client_socket
 
     except KeyboardInterrupt:
-        for client in clients:
-            print(f"Chiudo il clinet {client[2]}")
-            client[0].close()
-            client[1].join()
+        for client in clients.values():
+            print(f"\nChiudo il clinet {client[1]}")
+            client.close()
+        clients.clear()
         print("\n[SERVER] Tutti i client disconnessi.")
         print("\n[SERVER] Server chiuso.")
         server.close()
