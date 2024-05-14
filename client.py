@@ -33,9 +33,6 @@ class ChatClient(tk.Tk):
 
     def handle_close(self):
         self.client_socket.close()
-        self.close()
-
-    def close(self):
         self.after(500, self.destroy)
 
     def receive_messages(self):
@@ -46,12 +43,13 @@ class ChatClient(tk.Tk):
                     self.chat_history.insert(tk.END, f"{message}\n")
                     self.chat_history.see(tk.END)
                 else:
-                    print("Sei stato disconnesso dal server")
+                    print("Sarai disconnesso dal server...")
                     break
-            except OSError:
+            except (Exception, OSError):
+                print("Sarai disconnesso dal server...")
                 break
             
-        self.close()
+        self.handle_close()
 
 if __name__ == "__main__":
     HOST = input("Insert the ip of the server: ")
