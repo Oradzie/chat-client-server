@@ -61,7 +61,7 @@ def serverStart():
             client_socket, addr = server.accept()
             
             # Aspetto che il client invii il suo nickname
-            data = client_socket.recv(1024)
+            data = client_socket.recv(BUFFER_SIZE)
             if data:
                 name = data.decode()
             
